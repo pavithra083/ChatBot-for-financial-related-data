@@ -1,0 +1,168 @@
+
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.app-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: white;
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.app-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+  font-weight: 300;
+}
+
+.app-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem 1rem;
+}
+
+.upload-section {
+  margin-bottom: 2rem;
+}
+
+.document-active {
+  background: white;
+  border-radius: 16px;
+  margin-top: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.document-info {
+  padding: 1.5rem 2rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.document-info h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.document-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.document-details p {
+  margin: 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.status-success {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.interaction-section {
+  padding: 2rem;
+}
+
+.chat-section {
+  margin-bottom: 2rem;
+}
+
+.export-section {
+  margin-bottom: 1rem;
+}
+
+.welcome-info {
+  margin-top: 2rem;
+}
+
+.welcome-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-card h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+.welcome-card ol {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.welcome-card li {
+  margin-bottom: 0.75rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.feature span {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.feature p {
+  margin: 0;
+  color: #555;
+  line-height: 1.4;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: white;
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+  
+  .document-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .interaction-section {
+    padding: 1rem;
+  }
+  
+  .features {
+    grid-template-columns: 1fr;
+  }
+}
