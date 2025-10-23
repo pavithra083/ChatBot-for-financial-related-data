@@ -6,7 +6,7 @@ export const convertPDFDataToExcel = (extractedText, analysis, outputPath) => {
 
     const workbook = XLSX.utils.book_new();
 
-    // Create properly structured transaction data WITHOUT description column
+   
     const transactionData = analysis.transactions.map((t) => ({
       'Date': t.date,
       'Income (INR)': t.income,
@@ -14,7 +14,7 @@ export const convertPDFDataToExcel = (extractedText, analysis, outputPath) => {
       'Profit (INR)': t.profit
     }));
 
-    // If no proper transactions found, show message
+    
     if (transactionData.length === 0) {
       transactionData.push({
         'Date': 'No data',
@@ -27,10 +27,10 @@ export const convertPDFDataToExcel = (extractedText, analysis, outputPath) => {
     const transactionsSheet = XLSX.utils.json_to_sheet(transactionData);
     
     transactionsSheet['!cols'] = [
-      { wch: 15 }, // Date
-      { wch: 15 }, // Income
-      { wch: 18 }, // Expenditures
-      { wch: 15 }  // Profit
+      { wch: 15 }, 
+      { wch: 15 }, 
+      { wch: 18 }, 
+      { wch: 15 }  
     ];
     
     XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'Daily Transactions');

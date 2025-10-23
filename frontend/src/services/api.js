@@ -9,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Upload PDF file
+
 export const uploadPDF = async (file) => {
   const formData = new FormData();
   formData.append('pdf', file);

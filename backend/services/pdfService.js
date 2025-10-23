@@ -41,23 +41,23 @@ const extractTransactionsWithCorrectProfit = (text) => {
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Look for date pattern
+    
     const dateMatch = line.match(/(\d{1,2}-[A-Za-z]{3}-\d{4})/);
     if (dateMatch) {
       const date = dateMatch[1];
       console.log('Found date:', date);
       
-      // Extract financial data from this section
+      
       const financialData = extractFinancialData(lines, i, date);
       
-      // Calculate profit as income - expenditure
+      
       const profit = financialData.income - financialData.expenditures;
       
       transactions.push({
         date: date,
         income: financialData.income,
         expenditures: financialData.expenditures,
-        profit: profit // CORRECT: income - expenditure
+        profit: profit 
       });
       
       console.log('Transaction:', {
@@ -76,11 +76,11 @@ const extractFinancialData = (lines, startIndex, date) => {
   let income = 0;
   let expenditures = 0;
   
-  // Check next 8 lines for financial data
+  
   for (let i = startIndex; i < Math.min(startIndex + 8, lines.length); i++) {
     const line = lines[i].trim();
     
-    // Extract income - "amounted to INR 37711"
+    
     if ((line.includes('income') || line.includes('amounted to')) && line.includes('INR')) {
       const incomeMatch = line.match(/INR\s+(\d+)/);
       if (incomeMatch) {
@@ -89,7 +89,7 @@ const extractFinancialData = (lines, startIndex, date) => {
       }
     }
     
-    // Extract expenditures - "totaled INR 11560"
+    
     if ((line.includes('expenditures') || line.includes('totaled')) && line.includes('INR')) {
       const expenseMatch = line.match(/INR\s+(\d+)/);
       if (expenseMatch) {

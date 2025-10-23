@@ -10,7 +10,7 @@ import { convertPDFDataToExcel } from '../services/excelService.js';
 
 const router = express.Router();
 
-// Configure multer for file uploads
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/pdfs';
@@ -36,20 +36,19 @@ const upload = multer({
   }
 });
 
-// Upload PDF
 router.post('/upload', upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Extract text from PDF
+    
     const pdfData = await extractTextFromPDF(req.file.path);
     
-    // Analyze financial data
+    
     const analysis = analyzeFinancialData(pdfData.text);
 
-    // Save document to database
+    
     const document = new Document({
       filename: req.file.filename,
       originalName: req.file.originalname,
@@ -63,7 +62,7 @@ router.post('/upload', upload.single('pdf'), async (req, res) => {
 
     await document.save();
 
-    // Create initial chat
+    
     const chat = new Chat({
       documentId: document._id,
       messages: []
@@ -84,7 +83,7 @@ router.post('/upload', upload.single('pdf'), async (req, res) => {
   }
 });
 
-// Send chat message
+
 router.post('/chat', async (req, res) => {
   try {
     const { documentId, message } = req.body;
@@ -93,32 +92,32 @@ router.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Document ID and message are required' });
     }
 
-    // Get document
+    
     const document = await Document.findById(documentId);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Get or create chat
+    
     let chat = await Chat.findOne({ documentId });
     if (!chat) {
       chat = new Chat({ documentId, messages: [] });
     }
 
-    // Add user message
+    
     chat.messages.push({
       role: 'user',
       content: message
     });
 
-    // Generate AI response
+    
     const aiResponse = await generateChatResponse(
       message,
       document.extractedText,
-      chat.messages.slice(-10) // Last 10 messages for context
+      chat.messages.slice(-10) 
     );
 
-    // Add assistant message
+    
     chat.messages.push({
       role: 'assistant',
       content: aiResponse
@@ -137,7 +136,7 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// Download as Excel
+
 router.get('/download/:documentId', async (req, res) => {
   try {
     const document = await Document.findById(req.params.documentId);
@@ -162,7 +161,7 @@ router.get('/download/:documentId', async (req, res) => {
       if (err) {
         console.error('Download Error:', err);
       }
-      // Clean up excel file after download
+      
       fs.unlinkSync(excelPath);
     });
   } catch (error) {
@@ -171,7 +170,7 @@ router.get('/download/:documentId', async (req, res) => {
   }
 });
 
-// Get chat history
+
 router.get('/chat/:documentId', async (req, res) => {
   try {
     const chat = await Chat.findOne({ documentId: req.params.documentId });

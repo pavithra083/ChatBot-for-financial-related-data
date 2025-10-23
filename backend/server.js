@@ -8,18 +8,18 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
+
 connectDB();
 
-// Routes
+
 app.use('/api', apiRoutes);
 
-// Health check
+
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Financial Chatbot API is running' });
 });
