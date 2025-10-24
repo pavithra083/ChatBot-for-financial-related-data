@@ -9,8 +9,8 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  path: {
-    type: String,
+  fileSize: {
+    type: Number,
     required: true
   },
   extractedText: {
@@ -18,13 +18,23 @@ const documentSchema = new mongoose.Schema({
     required: true
   },
   metadata: {
-    type: Object,
-    default: {}
+    pages: Number,
+    fileSize: Number,
+    mimetype: String,
+    financialData: Object,
+    transactions: Array,
+    processedAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   uploadedAt: {
     type: Date,
     default: Date.now
   }
 });
+
+documentSchema.index({ uploadedAt: -1 });
+documentSchema.index({ originalName: 1 });
 
 export default mongoose.model('Document', documentSchema);

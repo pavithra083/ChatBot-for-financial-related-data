@@ -34,7 +34,8 @@ Provide clear, concise, and accurate responses based on the document content.`
       OPENROUTER_API_URL,
       {
         model: 'openai/gpt-4o',
-        messages: messages
+        messages: messages,
+        
       },
       {
         headers: {
