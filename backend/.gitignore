@@ -1,0 +1,6 @@
+node_modules/
+uploads/
+.env
+client_secret.json
+
+temp/

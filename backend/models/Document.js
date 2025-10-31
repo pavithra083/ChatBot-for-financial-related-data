@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-const documentSchema = new mongoose.Schema({
+const DocumentSchema = new mongoose.Schema({
   filename: {
     type: String,
     required: true
@@ -9,32 +9,42 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  fileSize: {
-    type: Number,
+  filePath: {
+    type: String,
     required: true
   },
   extractedText: {
     type: String,
     required: true
   },
-  metadata: {
-    pages: Number,
-    fileSize: Number,
-    mimetype: String,
-    financialData: Object,
-    transactions: Array,
-    processedAt: {
-      type: Date,
-      default: Date.now
-    }
+  structuredData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   uploadedAt: {
     type: Date,
     default: Date.now
+  },
+  fileSize: {
+    type: Number
+  },
+  pageCount: {
+    type: Number
+  },
+  isChunked: {
+    type: Boolean,
+    default: false
+  },
+  totalChunks: {
+    type: Number,
+    default: 0
+  },
+  chunkingStatus: {
+    type: String,
+    enum: ['none', 'chunked', 'analyzing', 'completed'],
+    default: 'none'
   }
 });
 
-documentSchema.index({ uploadedAt: -1 });
-documentSchema.index({ originalName: 1 });
 
-export default mongoose.model('Document', documentSchema);
+module.exports = mongoose.models.Document || mongoose.model('Document', DocumentSchema);

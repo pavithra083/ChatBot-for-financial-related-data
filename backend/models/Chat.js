@@ -1,27 +1,31 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-const chatSchema = new mongoose.Schema({
+const MessageSchema = new mongoose.Schema({
+  role: {
+    type: String,
+    enum: ['user', 'assistant'],
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  },
+  responseTime: {
+    type: Number 
+  }
+});
+
+const ChatSchema = new mongoose.Schema({
   documentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Document',
-    required: true,
-    index: true
+    required: true
   },
-  messages: [{
-    role: {
-      type: String,
-      enum: ['user', 'assistant'],
-      required: true
-    },
-    content: {
-      type: String,
-      required: true
-    },
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  messages: [MessageSchema],
   createdAt: {
     type: Date,
     default: Date.now
@@ -32,10 +36,10 @@ const chatSchema = new mongoose.Schema({
   }
 });
 
-
-chatSchema.pre('save', function(next) {
+ChatSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-export default mongoose.model('Chat', chatSchema);
+// Check if model exists before creating it
+module.exports = mongoose.models.Chat || mongoose.model('Chat', ChatSchema);

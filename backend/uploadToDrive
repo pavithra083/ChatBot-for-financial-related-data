@@ -1,0 +1,40 @@
+const { google } = require('googleapis');
+const fs = require('fs');
+const path = require('path');
+
+const FOLDER_ID = '1zCQycNncl9TQy-mcjv1vfTkjXOAOt5rx';
+
+// PASTE YOUR REFRESH TOKEN HERE
+const REFRESH_TOKEN = '1//04gizrlnVEWewCgYIARAAGAQSNwF-L9IriIg9idqOsPKo3dcybO-xP8ZnuDPU1JyAhC8-oRmsugO39tLG91QK08BEoDwjetQxT0o'; // ← PASTE HERE
+
+// FROM client_secret.json
+const CLIENT_ID = '719337481125-7ce2odg1hgabrq7bk3d51cmoll3tjb8h.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
+
+const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+async function uploadFile(filePath, fileName) {
+  const fileMetadata = { name: fileName, parents: [FOLDER_ID] };
+  const media = {
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    body: fs.createReadStream(filePath),
+  };
+
+  const res = await drive.files.create({
+    resource: fileMetadata,
+    media,
+    fields: 'id, webViewLink',
+  });
+
+  await drive.permissions.create({
+    fileId: res.data.id,
+    requestBody: { role: 'reader', type: 'anyone' },
+  });
+
+  return res.data.webViewLink;
+}
+
+module.exports = { uploadFile };
