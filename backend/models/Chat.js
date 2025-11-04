@@ -15,7 +15,11 @@ const MessageSchema = new mongoose.Schema({
     default: Date.now
   },
   responseTime: {
-    type: Number 
+    type: Number
+  },
+  isError: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -33,13 +37,19 @@ const ChatSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+ 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 });
+
 
 ChatSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Check if model exists before creating it
 module.exports = mongoose.models.Chat || mongoose.model('Chat', ChatSchema);

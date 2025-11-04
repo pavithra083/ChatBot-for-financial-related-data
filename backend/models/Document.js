@@ -43,8 +43,13 @@ const DocumentSchema = new mongoose.Schema({
     type: String,
     enum: ['none', 'chunked', 'analyzing', 'completed'],
     default: 'none'
+  },
+  
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 });
-
 
 module.exports = mongoose.models.Document || mongoose.model('Document', DocumentSchema);

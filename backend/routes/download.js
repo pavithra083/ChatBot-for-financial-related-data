@@ -4,24 +4,33 @@ const Document = require('../models/Document');
 const { generateExcelFromDocument } = require('../services/excelService');
 const fs = require('fs').promises;
 const path = require('path');
+const auth = require('../middleware/auth');
 
-// REAL UPLOAD TO GOOGLE DRIVE
+// UPLOAD TO GOOGLE DRIVE
 const { uploadFile } = require('../uploadToDrive');
 
-// ====================== DOWNLOAD EXCEL ======================
-router.get('/:documentId', async (req, res) => {
+
+router.use(auth);
+
+
+router.get('/:documentId', auth, async (req, res) => {
   try {
     const { documentId } = req.params;
+    const userId = req.user._id;
     
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`DOWNLOAD EXCEL REQUEST`);
+    console.log(`DOWNLOAD EXCEL REQUEST FROM USER: ${userId}`);
     console.log(`${'='.repeat(60)}`);
     console.log(`Document ID: ${documentId}`);
 
-    const document = await Document.findById(documentId);
+    // Verify document belongs to user
+    const document = await Document.findOne({ _id: documentId, userId });
     if (!document) {
-      console.log('Document not found');
-      return res.status(404).json({ error: 'Document not found' });
+      console.log('❌ Document not found or access denied');
+      return res.status(404).json({ 
+        success: false,
+        error: 'Document not found' 
+      });
     }
 
     console.log(`Generating Excel for: ${document.originalName}`);
@@ -38,26 +47,34 @@ router.get('/:documentId', async (req, res) => {
 
   } catch (error) {
     console.error('DOWNLOAD ERROR:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 
-// ====================== UPLOAD TO GOOGLE DRIVE ======================
-router.post('/drive/:documentId', async (req, res) => {
+
+router.post('/drive/:documentId', auth, async (req, res) => {
   const tempPath = path.join(__dirname, '../temp', `excel_${Date.now()}.xlsx`);
   
   try {
     const { documentId } = req.params;
+    const userId = req.user._id;
     
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`UPLOAD TO GOOGLE DRIVE`);
+    console.log(`UPLOAD TO GOOGLE DRIVE FROM USER: ${userId}`);
     console.log(`${'='.repeat(60)}`);
     console.log(`Document ID: ${documentId}`);
 
-    const document = await Document.findById(documentId);
+    // Verify document belongs to user
+    const document = await Document.findOne({ _id: documentId, userId });
     if (!document) {
-      console.log('Document not found');
-      return res.status(404).json({ error: 'Document not found' });
+      console.log('❌ Document not found or access denied');
+      return res.status(404).json({ 
+        success: false,
+        error: 'Document not found' 
+      });
     }
 
     console.log(`Generating Excel...`);
@@ -88,7 +105,10 @@ router.post('/drive/:documentId', async (req, res) => {
     console.error(`\nUPLOAD FAILED: ${error.message}`);
     try { await fs.unlink(tempPath); } catch {}
     console.error(`${'='.repeat(60)}\n`);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 

@@ -3,10 +3,14 @@ const router = express.Router();
 const Chat = require('../models/Chat');
 const Document = require('../models/Document');
 const { generateChatResponse } = require('../services/geminiservice');
+const auth = require('../middleware/auth');
 
+// Apply auth middleware to all chat routes
+router.use(auth);
 
 router.post('/', async (req, res) => {
   const startTime = Date.now();
+  const userId = req.user._id;
   
   try {
     const { chatId, message } = req.body;
@@ -19,17 +23,17 @@ router.post('/', async (req, res) => {
     }
 
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`💬 CHAT REQUEST RECEIVED`);
+    console.log(`💬 CHAT REQUEST FROM USER: ${userId}`);
     console.log(`${'='.repeat(60)}`);
     console.log(`💬 Chat ID: ${chatId}`);
     console.log(`👤 User Message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`);
     console.log(`📝 Message Length: ${message.length} characters`);
 
-    
-    const chat = await Chat.findById(chatId).populate('documentId');
+    // Find chat and verify user ownership
+    const chat = await Chat.findOne({ _id: chatId, userId }).populate('documentId');
     
     if (!chat) {
-      console.log('❌ Chat not found');
+      console.log('❌ Chat not found or access denied');
       return res.status(404).json({ 
         success: false,
         error: 'Chat not found' 
@@ -40,7 +44,6 @@ router.post('/', async (req, res) => {
     console.log(`📄 Document ID: ${document._id}`);
     console.log(`📄 Document Name: ${document.originalName}`);
     
-    
     const hasStructuredData = document.structuredData && document.structuredData.items;
     if (!hasStructuredData) {
       console.log(`⚠️  Note: Structured data still processing in background`);
@@ -48,17 +51,14 @@ router.post('/', async (req, res) => {
       console.log(`✅ Structured data available: ${document.structuredData.items.length} items`);
     }
 
-    
     chat.messages.push({
       role: 'user',
       content: message,
       timestamp: new Date()
     });
 
-    
     console.log(`\n🤖 Generating AI Response...`);
     const aiStartTime = Date.now();
-    
     
     const structuredDataToUse = document.structuredData || null;
     
@@ -66,13 +66,12 @@ router.post('/', async (req, res) => {
       message, 
       document.extractedText,
       structuredDataToUse,
-      chat.messages.slice(-6) 
+      chat.messages.slice(-6)
     );
 
     const responseTime = Date.now() - startTime;
     const aiProcessTime = Date.now() - aiStartTime;
 
-    
     chat.messages.push({
       role: 'assistant',
       content: aiResponse,
@@ -82,7 +81,6 @@ router.post('/', async (req, res) => {
 
     await chat.save();
 
-  
     const performanceStatus = responseTime < 1900 ? '✅ FAST' : '⚠️  SLOW';
     const performanceIcon = responseTime < 1000 ? '🚀' : responseTime < 1900 ? '⚡' : '🐌';
 
@@ -123,17 +121,17 @@ router.post('/', async (req, res) => {
   }
 });
 
-
-router.get('/:chatId', async (req, res) => {
+router.get('/:chatId', auth, async (req, res) => {
   try {
     const { chatId } = req.params;
+    const userId = req.user._id;
     
-    console.log(`\n📋 Fetching chat history for ID: ${chatId}`);
+    console.log(`\n📋 Fetching chat history for ID: ${chatId} (User: ${userId})`);
     
-    const chat = await Chat.findById(chatId).populate('documentId');
+    const chat = await Chat.findOne({ _id: chatId, userId }).populate('documentId');
     
     if (!chat) {
-      console.log('❌ Chat not found');
+      console.log('❌ Chat not found or access denied');
       return res.status(404).json({ 
         success: false,
         error: 'Chat not found' 
@@ -162,14 +160,14 @@ router.get('/:chatId', async (req, res) => {
   }
 });
 
-
-router.delete('/:chatId', async (req, res) => {
+router.delete('/:chatId', auth, async (req, res) => {
   try {
     const { chatId } = req.params;
+    const userId = req.user._id;
     
-    console.log(`\n🗑️  Deleting chat: ${chatId}`);
+    console.log(`\n🗑️  Deleting chat: ${chatId} (User: ${userId})`);
     
-    const chat = await Chat.findByIdAndDelete(chatId);
+    const chat = await Chat.findOneAndDelete({ _id: chatId, userId });
     
     if (!chat) {
       return res.status(404).json({ 
@@ -194,12 +192,21 @@ router.delete('/:chatId', async (req, res) => {
   }
 });
 
-
-router.get('/document/:documentId', async (req, res) => {
+router.get('/document/:documentId', auth, async (req, res) => {
   try {
     const { documentId } = req.params;
+    const userId = req.user._id;
     
-    const chats = await Chat.find({ documentId: documentId })
+    // Verify document belongs to user
+    const document = await Document.findOne({ _id: documentId, userId });
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found'
+      });
+    }
+
+    const chats = await Chat.find({ documentId: documentId, userId })
       .sort({ createdAt: -1 });
     
     res.json({

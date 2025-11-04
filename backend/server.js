@@ -17,10 +17,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-
-
-
-
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -33,13 +29,13 @@ connectDB();
 const uploadRoutes = require('./routes/upload');
 const chatRoutes = require('./routes/chat');
 const downloadRoutes = require('./routes/download'); 
-
+const authRoutes = require('./routes/auth');
 
 // API Routes
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/download', downloadRoutes); 
-
+app.use('/api/auth', authRoutes);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
@@ -56,6 +52,7 @@ app.get('/', (req, res) => {
     message: 'Financial Document Chatbot API',
     version: '1.0.0',
     endpoints: {
+      auth: '/api/auth',
       upload: '/api/upload',
       chat: '/api/chat',
       download: '/api/download/:documentId',

@@ -2,5 +2,8 @@ node_modules/
 uploads/
 .env
 client_secret.json
-
+server.js.backup
+test-upload.txt
+test-drive.js
+uploadToDrive
 temp/

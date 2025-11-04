@@ -17,7 +17,7 @@ const {
   PAGES_PER_CHUNK
 } = require('../services/pdfChunkingService');
 const { generateExcelFromDocument } = require('../services/excelService');
-
+const auth = require('../middleware/auth');
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -48,9 +48,12 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
+// Apply auth middleware to all upload routes
+router.use(auth);
 
 router.post('/', upload.single('file'), async (req, res) => {
   const startTime = Date.now();
+  const userId = req.user._id;
   
   try {
     if (!req.file) {
@@ -58,24 +61,21 @@ router.post('/', upload.single('file'), async (req, res) => {
     }
 
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`📤 FILE UPLOAD STARTED`);
+    console.log(`📤 FILE UPLOAD FROM USER: ${userId}`);
     console.log(`${'='.repeat(60)}`);
     console.log(`📁 File Name: ${req.file.originalname}`);
     console.log(`📊 File Size: ${(req.file.size / 1024).toFixed(2)} KB`);
     console.log(`📂 File Path: ${req.file.path}`);
 
-   
     console.log(`\n[Step 1/5] Extracting text from PDF...`);
     const pdfData = await extractTextFromPDF(req.file.path);
     console.log(`✅ Extracted ${pdfData.numPages} pages`);
     console.log(`✅ Text length: ${pdfData.text.length} characters`);
 
-    
     const shouldChunk = pdfData.numPages > PAGES_PER_CHUNK;
     console.log(`\n📊 PDF Size: ${pdfData.numPages} pages`);
     console.log(`📋 Chunking: ${shouldChunk ? 'YES' : 'NO'} (threshold: ${PAGES_PER_CHUNK} pages)`);
 
-   
     console.log(`\n[Step 2/5] Saving to MongoDB...`);
     const document = new Document({
       filename: req.file.filename,
@@ -87,35 +87,32 @@ router.post('/', upload.single('file'), async (req, res) => {
       pageCount: pdfData.numPages,
       isChunked: shouldChunk,
       totalChunks: shouldChunk ? Math.ceil(pdfData.numPages / PAGES_PER_CHUNK) : 0,
-      chunkingStatus: shouldChunk ? 'chunked' : 'none'
+      chunkingStatus: shouldChunk ? 'chunked' : 'none',
+      userId: userId // ADD USER ID
     });
 
     await document.save();
     console.log(`✅ Document saved with ID: ${document._id}`);
 
-    
     console.log(`\n[Step 3/5] Creating chat session...`);
     const chat = new Chat({
       documentId: document._id,
-      messages: []
+      messages: [],
+      userId: userId // ADD USER ID
     });
 
     await chat.save();
     console.log(`✅ Chat session created with ID: ${chat._id}`);
 
-    
     if (shouldChunk) {
       console.log(`\n[Step 4/5] Processing LARGE document with chunking...`);
       
       try {
-       
         const chunks = await splitPDFIntoChunks(req.file.path, pdfData.numPages);
         console.log(`✅ PDF split into ${chunks.length} chunks`);
         
-        
         const savedChunks = await saveChunksToDatabase(document._id, chunks);
         console.log(`✅ ${savedChunks.length} chunks saved to MongoDB`);
-        
         
         console.log(`\n[Step 5/5] Starting background analysis...`);
         analyzeChunksInBackground(savedChunks, document._id);
@@ -132,7 +129,6 @@ router.post('/', upload.single('file'), async (req, res) => {
       
     } else {
       console.log(`\n[Step 4/5] Processing SMALL document (no chunking)...`);
-      
       
       extractStructuredData(pdfData.text)
         .then(async (structuredData) => {
@@ -169,6 +165,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     console.log(`${'='.repeat(60)}`);
     console.log(`📄 Document ID: ${document._id}`);
     console.log(`💬 Chat ID: ${chat._id}`);
+    console.log(`👤 User ID: ${userId}`);
     console.log(`⏱️  Total Processing Time: ${(totalTime / 1000).toFixed(2)}s`);
     console.log(`📊 Document Size: ${pdfData.numPages} pages`);
     console.log(`🔄 Processing Mode: ${shouldChunk ? 'CHUNKED' : 'DIRECT'}`);
@@ -203,7 +200,6 @@ router.post('/', upload.single('file'), async (req, res) => {
     console.error('Stack:', error.stack);
     console.error(`${'='.repeat(60)}\n`);
     
-    
     if (req.file && req.file.path) {
       try {
         await fs.unlink(req.file.path);
@@ -220,10 +216,11 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
-
-router.get('/documents', async (req, res) => {
+router.get('/documents', auth, async (req, res) => {
   try {
-    const documents = await Document.find()
+    const userId = req.user._id;
+    
+    const documents = await Document.find({ userId })
       .sort({ uploadedAt: -1 })
       .select('originalName uploadedAt pageCount fileSize _id chunkingStatus');
     
@@ -241,10 +238,10 @@ router.get('/documents', async (req, res) => {
   }
 });
 
-
-router.get('/document/:id', async (req, res) => {
+router.get('/document/:id', auth, async (req, res) => {
   try {
-    const document = await Document.findById(req.params.id);
+    const userId = req.user._id;
+    const document = await Document.findOne({ _id: req.params.id, userId });
     
     if (!document) {
       return res.status(404).json({ 
@@ -253,7 +250,6 @@ router.get('/document/:id', async (req, res) => {
       });
     }
     
-   
     const analysisStatus = document.isChunked 
       ? await getAnalysisStatus(document._id)
       : {
@@ -279,7 +275,6 @@ router.get('/document/:id', async (req, res) => {
     });
   }
 });
-
 
 router.get('/download/:documentId', async (req, res) => {
   try {
